@@ -77,7 +77,18 @@ export default function BookAppointmentPage() {
     }
   };
 
-  const upsertProfile = async (userId: string, profileData: FormData, existingProfile: any) => {
+  interface Profile {
+    id?: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone_number?: string | null;
+    address?: string | null;
+    date_of_birth?: string | null;
+    sex?: string | null;
+    civil_status?: string | null;
+  }
+
+  const upsertProfile = async (userId: string, profileData: FormData, existingProfile: Profile | null) => {
     const { error } = await supabase
       .from('profiles')
       .upsert({
@@ -95,7 +106,14 @@ export default function BookAppointmentPage() {
     if (error) throw error;
   };
 
-  const upsertPatient = async (userId: string, profileData: FormData, existingPatient: any) => {
+  interface Patient {
+    id?: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    blood_type?: string | null;
+  }
+
+  const upsertPatient = async (userId: string, profileData: FormData, existingPatient: Patient | null) => {
     // Upsert patient-specific data.
     // The schema has redundant name columns, so we populate them.
     // Blood type is not on this form, so we preserve the existing value.

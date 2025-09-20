@@ -97,7 +97,17 @@ export function Notifications({ maxItems = 10, className = '' }: NotificationsPr
 
       if (error) throw error;
 
-      const mapped = (data || []).map((n: any) => ({
+      interface DatabaseNotification {
+        id: string;
+        type: NotificationType;
+        title: string;
+        message: string;
+        is_read: boolean;
+        created_at: string;
+        data?: NotificationData;
+      }
+
+      const mapped = (data || []).map((n: DatabaseNotification) => ({
         id: n.id,
         type: n.type,
         title: n.title,

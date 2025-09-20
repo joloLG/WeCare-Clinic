@@ -13,6 +13,14 @@ interface Notification {
   created_at: string;
 }
 
+interface NotificationData {
+  id: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -46,7 +54,7 @@ export function NotificationBell() {
         }
 
         if (data) {
-          const mapped = data.map((n: any) => ({
+          const mapped = data.map((n: NotificationData) => ({
             id: n.id,
             title: n.title,
             message: n.message,
@@ -86,7 +94,7 @@ export function NotificationBell() {
             table
           }, 
           (payload) => {
-            const n = payload.new as any;
+            const n = payload.new as NotificationData;
             const mapped = {
               id: n.id,
               title: n.title,
