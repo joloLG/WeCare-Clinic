@@ -7,17 +7,19 @@ export type UserProfile = {
   email: string;
   avatar_url?: string;
   role: 'admin' | 'patient' | 'provider' | 'user';
+  // is_online property removed - not available in database schema
 };
 
 export type Message = {
   id: string;
-  sender_id: string;
-  receiver_id: string;
   content: string;
-  is_read: boolean;
   created_at: string;
-  sender?: UserProfile;
-  receiver?: UserProfile;
+  is_read: boolean;
+  sender: UserProfile;
+  receiver: UserProfile;
+  sender_id?: string;
+  receiver_id?: string;
+  table?: 'user_messages' | 'admin_messages';
 };
 
 export type MessagePayload = Omit<Message, 'sender' | 'receiver'> & {

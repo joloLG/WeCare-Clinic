@@ -34,6 +34,9 @@ export function ForgotPasswordForm() {
         type: 'success',
         text: 'Password reset link sent! Please check your email.',
       });
+
+      // Clear the form after successful submission
+      setEmail('');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       console.error('Error:', error);
@@ -52,17 +55,17 @@ export function ForgotPasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-6">
+    <div className="bg-white p-8 rounded-lg shadow-md max-w-sm mx-auto">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">Forgot Password</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">FORGOT PASSWORD</h1>
+        <p className="text-sm text-gray-500 mt-2">
           Enter your email to receive a password reset link
         </p>
       </div>
 
       {message.text && (
         <div
-          className={`p-4 rounded-md ${
+          className={`p-4 rounded-md mt-4 ${
             message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
           }`}
         >
@@ -70,9 +73,9 @@ export function ForgotPasswordForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 mt-6">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email" className="text-gray-700">Email</Label>
           <Input
             id="email"
             type="email"
@@ -80,21 +83,21 @@ export function ForgotPasswordForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="text-black bg-white border border-gray-300 focus:border-red-500 focus:ring-red-500"
+            disabled={loading}
           />
         </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" disabled={loading}>
           {loading ? 'Sending...' : 'Send Reset Link'}
         </Button>
       </form>
 
-      <div className="text-center text-sm">
-        <p className="text-muted-foreground">
-          Remember your password?{' '}
-          <a href="/auth/login" className="text-primary hover:underline">
-            Sign in
-          </a>
-        </p>
+      <div className="mt-4 text-center text-sm text-gray-600">
+        Remember your password?{' '}
+        <a href="/auth/login" className="font-medium text-red-600 hover:underline">
+          Sign in
+        </a>
       </div>
     </div>
   );

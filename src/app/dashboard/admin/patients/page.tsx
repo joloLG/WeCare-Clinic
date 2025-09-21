@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Search, Syringe, User, Calendar, CheckCircle2, Clock } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -53,6 +53,7 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [vaccineRecords, setVaccineRecords] = useState<Record<string, VaccinationRecord[]>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [vaccinationStatuses, setVaccinationStatuses] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -78,6 +79,44 @@ export default function PatientsPage() {
     animal_bite: 'dog'
   });
   const supabase = createClient();
+
+  useEffect(() => {
+    const subscription = supabase
+      .channel('vaccination_status_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'e_vaccination_card'
+      }, (payload) => {
+        if (payload.new) {
+          setVaccinationStatuses(prev => ({
+            ...prev,
+            [payload.new.patient_id]: payload.new.vaccination_status
+          }));
+        }
+      })
+      .subscribe();
+
+    const fetchVaccinationStatuses = async () => {
+      const { data, error } = await supabase
+        .from('e_vaccination_card')
+        .select('patient_id, vaccination_status');
+      
+      if (!error && data) {
+        const statuses = data.reduce((acc, curr) => ({
+          ...acc,
+          [curr.patient_id]: curr.vaccination_status
+        }), {});
+        setVaccinationStatuses(statuses);
+      }
+    };
+
+    fetchVaccinationStatuses();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -171,34 +210,20 @@ export default function PatientsPage() {
   };
 
   const getVaccinationStatus = (patientId: string) => {
-    const records = vaccineRecords[patientId] || [];
-    if (records.length === 0) return { text: 'Not Started', color: 'bg-gray-100 text-gray-800' };
+    const status = vaccinationStatuses[patientId] || 'No Vaccination';
     
-    // Get the most recent record
-    const latestRecord = [...records].sort((a, b) => 
-      new Date(b.date_administered).getTime() - new Date(a.date_administered).getTime()
-    )[0];
-    
-    // If we have a patient status, use that
-    if (latestRecord.patient_status) {
-      const statusMap: Record<string, { text: string; color: string }> = {
-        '1st Vaccination': { text: '1st Dose', color: 'bg-blue-100 text-blue-800' },
-        '2nd Vaccination': { text: '2nd Dose', color: 'bg-yellow-100 text-yellow-800' },
-        'Fully Vaccinated': { text: 'Completed', color: 'bg-green-100 text-green-800' },
-        'No Vaccination': { text: 'Not Started', color: 'bg-gray-100 text-gray-800' }
-      };
-      return statusMap[latestRecord.patient_status] || { text: latestRecord.patient_status, color: 'bg-gray-100 text-gray-800' };
+    // Return appropriate badge styling based on status
+    switch (status) {
+      case '1st Vaccination':
+        return { text: status, color: 'bg-blue-100 text-blue-800' };
+      case '2nd Vaccination':
+        return { text: status, color: 'bg-purple-100 text-purple-800' };
+      case 'Fully Vaccinated':
+        return { text: status, color: 'bg-green-100 text-green-800' };
+      case 'No Vaccination':
+      default:
+        return { text: status, color: 'bg-gray-100 text-gray-800' };
     }
-    
-    // Fallback to counting doses if no status is available
-    const doseCount = records.length;
-    if (doseCount === 0) return { text: 'Not Started', color: 'bg-gray-100 text-gray-800' };
-    if (doseCount >= 2) return { text: 'Completed', color: 'bg-green-100 text-green-800' };
-    
-    return { 
-      text: `Dose ${doseCount} of 2`, 
-      color: 'bg-blue-100 text-blue-800' 
-    };
   };
 
   // Fetch available vaccines

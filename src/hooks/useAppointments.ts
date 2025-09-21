@@ -1,15 +1,26 @@
+// src/hooks/useAppointments.ts
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { sendNotification } from '@/app/actions/notifications';
 
 interface AppointmentData {
   patient_id: string;
-  vaccine_id?: string;
+  vaccine_id?: string | null;
   appointment_date: string;
   start_time: string;
   end_time: string;
   reason?: string;
   notes?: string;
+  address_of_bite?: string;
+  date_bites?: string | null;
+  time_of_bite?: string | null;
+  animal_type?: string;
+  animal_ownership?: string;
+  animal_status?: string;
+  animal_vaccinated?: string;
+  vaccinated_by?: string;
+  wound_management?: string;
+  allergies?: string;
 }
 
 export function useAppointments() {
@@ -46,22 +57,24 @@ export function useAppointments() {
       }
 
       // Send confirmation notification to the patient
-      await sendNotification(
-        appointmentData.patient_id,
-        'appointment',
-        'Appointment Confirmed',
-        `Your appointment has been scheduled for ${new Date(appointmentData.appointment_date).toLocaleDateString()} at ${appointmentData.start_time}.`,
-        {
-          appointment_id: result.data.id,
-          appointment_date: appointmentData.appointment_date,
-          start_time: appointmentData.start_time,
-          end_time: appointmentData.end_time
-        }
-      );
+      if (result.data) {
+        await sendNotification(
+          appointmentData.patient_id,
+          'appointment',
+          'Appointment Confirmed',
+          `Your appointment has been scheduled for ${new Date(appointmentData.appointment_date).toLocaleDateString()} at ${appointmentData.start_time}.`,
+          {
+            appointment_id: result.data.id,
+            appointment_date: appointmentData.appointment_date,
+            start_time: appointmentData.start_time,
+            end_time: appointmentData.end_time
+          }
+        );
+      }
 
       return result.data;
     } catch (err) {
-      console.error('Error booking appointment:', err);
+      console.error('Error in bookAppointment:', err);
       const error = err instanceof Error ? err : new Error('An unknown error occurred');
       setError(error);
       throw error;
@@ -107,30 +120,11 @@ export function useAppointments() {
           updated_at: new Date().toISOString()
         })
         .eq('id', appointmentId)
-        .select('*, patient:patient_id(id, first_name, last_name, email)')
+        .select()
         .single();
 
-      if (error) throw error;
-
-      // Send notification to patient about status update
-      if (data.patient) {
-        const statusMessage = {
-          'completed': 'has been completed',
-          'cancelled': 'has been cancelled',
-          'no_show': 'was marked as no-show',
-        }[status] || 'has been updated';
-
-        await sendNotification(
-          data.patient.id,
-          'appointment',
-          `Appointment ${statusMessage.split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}`,
-          `Your appointment on ${new Date(data.appointment_date).toLocaleDateString()} ${statusMessage}.`,
-          {
-            appointment_id: appointmentId,
-            status,
-            notes: notes || ''
-          }
-        );
+      if (error) {
+        throw error;
       }
 
       return data;

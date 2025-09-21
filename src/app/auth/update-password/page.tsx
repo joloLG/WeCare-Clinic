@@ -22,10 +22,10 @@ export default function UpdatePassword() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        router.push('/auth/login?message=Please sign in to update your password');
+        router.push('/auth/login?message=Please use the link from your email to update your password');
       }
     };
-    
+
     checkSession();
   }, [router, supabase]);
 
@@ -53,11 +53,11 @@ export default function UpdatePassword() {
       
       toast({
         title: 'Success',
-        description: 'Your password has been updated successfully!',
+        description: 'Your password has been updated successfully! Please sign in with your new password.',
         variant: 'default',
       });
       
-      router.push('/dashboard');
+      router.push('/auth/login?message=Password updated successfully! Please sign in with your new password.');
     } catch (error) {
       console.error('Error updating password:', error);
       setError(error instanceof Error ? error.message : 'An error occurred while updating your password');
@@ -138,11 +138,11 @@ export default function UpdatePassword() {
           <div className="text-center text-sm">
             <button
               type="button"
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/auth/login')}
               className="font-medium text-indigo-600 hover:text-indigo-500 flex items-center justify-center w-full"
             >
               <Icons.arrowLeft className="h-4 w-4 mr-1" />
-              Back to Dashboard
+              Back to Sign In
             </button>
           </div>
         </div>
